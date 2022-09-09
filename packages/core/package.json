@@ -1,0 +1,19 @@
+{
+  "name": "@subscribe-kit/core",
+  "version": "0.0.0",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c rollup.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'"
+  },
+  "devDependencies": {
+    "types-kit": "^0.0.11"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

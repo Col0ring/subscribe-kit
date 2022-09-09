@@ -1,0 +1,25 @@
+{
+  "name": "@subscribe-kit/react",
+  "version": "0.0.0",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c rollup.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'"
+  },
+  "devDependencies": {
+    "@subscribe-kit/core": "workspace:*",
+    "@types/react": "^18.0.18",
+    "react": "^18.2.0"
+  },
+  "peerDependencies": {
+    "@subscribe-kit/core": "workspace:*",
+    "react": ">=17.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
