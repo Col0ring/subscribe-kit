@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@subscribe-kit/core": "workspace:*",
-    "@types/react": "^18.0.18",
+    "@types/react": "^18.0.21",
     "react": "^18.2.0"
   },
   "peerDependencies": {

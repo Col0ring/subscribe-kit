@@ -12,7 +12,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@subscribe-kit/*": ["./packages/*/src/index.ts"]
+    }
   },
   "exclude": ["dist", "node_modules"]
 }
