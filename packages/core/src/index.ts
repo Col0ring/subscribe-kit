@@ -1,2 +1,2 @@
 export * from './Observer'
-export * from './operator'
+export * from './type'

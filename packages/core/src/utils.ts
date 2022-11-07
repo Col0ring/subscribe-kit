@@ -1,13 +1,19 @@
-import { SEPARATOR } from './constants'
-import { SubscribeKeys } from './type'
+import { EnsureArray, SubscribeKeys, SubscribeMap } from './type'
 
-export function encodeSubscribeKey<T>(key: SubscribeKeys<T>): PropertyKey {
-  if (Array.isArray(key)) {
-    return key.join(SEPARATOR)
-  }
-  return key as PropertyKey
+export function ensureArray<T>(value: T): EnsureArray<T> {
+  return (Array.isArray(value) ? value : [value]) as EnsureArray<T>
 }
 
-export function decodeSubscribeKey(key: string) {
+export function encodeSubscribeKey<T>(
+  subscribeMap: SubscribeMap<T>,
+  name: SubscribeKeys<T>
+): PropertyKey {
+  ensureArray(name).forEach((prop) => {
+    subscribeMap[prop]
+  })
+  return name as PropertyKey
+}
+
+export function decodeSubscribeKey(key: PropertyKey) {
   return
 }
