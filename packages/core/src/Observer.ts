@@ -8,21 +8,9 @@ import type {
 import { encodeSubscribeKey } from './utils'
 
 export class Observer<T> {
-  private initialValues: T
-  private values: T
   private subscriberMap = {} as SubscribeMap<T>
 
-  constructor(initialValues: T) {
-    this.initialValues = initialValues
-    this.values = this.initialValues
-  }
-
-  private notify() {}
-
-  resetValues() {
-    this.values = this.initialValues
-    return this
-  }
+  private _receive() {}
 
   setValues<N extends SubscribeKeys<T>>() {
     return this
