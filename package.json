@@ -1,6 +1,5 @@
 {
   "name": "subscribe-kit",
-  "version": "0.0.0",
   "private": true,
   "description": "a subscribe toolkit",
   "keywords": [
@@ -19,6 +18,8 @@
   "scripts": {
     "build": "pnpm  -F '@subscribe-kit/*' run build",
     "build:watch": "pnpm  -F '@subscribe-kit/*' run build -w",
+    "ci:publish": "changeset publish",
+    "ci:version": "changeset version",
     "format": "cross-env NODE_ENV=production prettier --write .",
     "lint": "pnpm run lint:eslint && pnpm run format",
     "lint:eslint": "cross-env NODE_ENV=production eslint . --fix",
@@ -28,6 +29,7 @@
     "@babel/core": "^7.20.2",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "@babel/preset-env": "^7.20.2",
+    "@changesets/changelog-github": "^0.4.7",
     "@changesets/cli": "^2.25.2",
     "@col0ring/eslint-config": "^0.0.13",
     "@col0ring/prettier-config": "^0.0.2",
