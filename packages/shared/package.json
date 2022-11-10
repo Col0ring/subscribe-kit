@@ -1,5 +1,5 @@
 {
-  "name": "@subscribe-kit/core",
+  "name": "@subscribe-kit/shared",
   "version": "0.0.0",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
@@ -11,9 +11,7 @@
     "build": "rollup -c rollup.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'"
   },
   "dependencies": {
-    "@babel/runtime": "^7.19.6",
-    "@subscribe-kit/shared": "workspace:*",
-    "immer": "^9.0.16"
+    "@babel/runtime": "^7.19.6"
   },
   "publishConfig": {
     "access": "public"

@@ -8,6 +8,9 @@
     "dev": "vite",
     "preview": "vite preview"
   },
+  "dependencies": {
+    "@subscribe-kit/core": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^4.6.4",
     "vite": "^3.1.0"

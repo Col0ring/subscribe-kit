@@ -10,8 +10,14 @@
   "scripts": {
     "build": "rollup -c rollup.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'"
   },
+  "dependencies": {
+    "@babel/runtime": "^7.19.6",
+    "@subscribe-kit/shared": "workspace:*",
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
     "@subscribe-kit/core": "workspace:*",
+    "@types/lodash": "^4.14.188",
     "@types/react": "^18.0.21",
     "react": "^18.2.0"
   },

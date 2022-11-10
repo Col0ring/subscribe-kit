@@ -1,2 +1,3 @@
 export * from './Observer'
-export * from './type'
+export * from './Store'
+export * from './types'

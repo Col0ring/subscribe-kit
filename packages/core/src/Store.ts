@@ -1,6 +1,7 @@
+import { ensureArray, isObject, isPromise } from '@subscribe-kit/shared'
 import { enablePatches, produceWithPatches } from 'immer'
 import { Observer } from './Observer'
-import { isPromise } from './utils'
+import { SubscribeKeys, SubscribeValue } from './types/subscribe'
 
 // immer patches
 enablePatches()
@@ -9,34 +10,63 @@ export interface StoreOptions<T> {
   initialValues?: T
 }
 
-export class Store<T> {
-  private initialValues: T
+export class Store<T = any> {
+  private _initialValues: T
   private _values: T
-  observer = new Observer<T>()
+  private _observer = new Observer<T>(this)
 
   get values() {
     return this._values
   }
 
-  constructor(options: StoreOptions<T> = {}) {
-    const { initialValues } = options
-    this.initialValues = initialValues || ({} as T)
-    this._values = this.initialValues
+  get observer() {
+    return this._observer
   }
 
-  private notify(values: T, oldValues: T, paths: PropertyKey[][]) {
-    this.observers.forEach((observer) => {
-      observer._receive(values, oldValues, paths)
-    })
+  constructor(options?: StoreOptions<T>) {
+    const { initialValues } = options || {}
+    this._initialValues = initialValues || ({} as T)
+    this._values = this._initialValues
+  }
+
+  private _notify(values: T, oldValues: T, paths: PropertyKey[][]) {
+    const observer = this._observer as unknown as {
+      _receive: Observer<T>['_receive']
+    }
+    observer._receive(paths, values, oldValues)
   }
 
   resetValues() {
-    this._values = this.initialValues
-    return this
+    this._values = this._initialValues
   }
 
-  setValues(recipe: (draft: T) => T | void): this
-  setValues(recipe: (draft: T) => Promise<T | void>): this
+  setValue<K extends SubscribeKeys<T>>(key: K, value: SubscribeValue<T, K>) {
+    const [values, changes] = produceWithPatches(this._values, (draft) => {
+      const path = ensureArray(key) as PropertyKey[]
+      const lastPath = path[path.length - 1]
+      const restPath = path.slice(0, -1)
+      let draftValue = draft as Record<PropertyKey, any>
+      let draftPrevValue: typeof draftValue | undefined
+      restPath.forEach((p) => {
+        draftPrevValue = draftValue
+        draftValue = draftValue[p]
+        if (!isObject(draftValue)) {
+          draftPrevValue[p] = {}
+          draftValue = draftPrevValue[p]
+        }
+      })
+      draftValue[lastPath] = value
+    })
+    this._notify(
+      values,
+      this._values,
+      changes.map(({ path }) => path)
+    )
+    this._values = values
+  }
+
+  setValues(recipe: (draft: T) => T | void): void
+  setValues(recipe: (draft: T) => Promise<T | void>): void
   setValues(recipe: (draft: T) => Promise<T | void> | T | void) {
     const result = produceWithPatches(
       this._values,
@@ -44,7 +74,7 @@ export class Store<T> {
     )
     if (isPromise<typeof result>(result)) {
       result.then(([values, changes]) => {
-        this.notify(
+        this._notify(
           values,
           this._values,
           changes.map(({ path }) => path)
@@ -53,13 +83,12 @@ export class Store<T> {
       })
     } else {
       const [values, changes] = result
-      this.notify(
+      this._notify(
         values,
         this._values,
         changes.map(({ path }) => path)
       )
       this._values = values
     }
-    return this
   }
 }

@@ -1,6 +1,6 @@
 import type { RollupOptions } from 'rollup'
 
-interface PackageConfig {
+export interface PackageConfig {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   module: string
@@ -8,4 +8,4 @@ interface PackageConfig {
   typings: string
 }
 
-declare function createBaseConfig(pkg: PackageConfig): RollupOptions[]
+export declare function createBaseConfig(pkg: PackageConfig): RollupOptions[]

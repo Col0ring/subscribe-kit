@@ -2,15 +2,11 @@
 
 a subscribe toolkit.
 
-## Usage
+# Packages
 
-```sh
-npm install subscribe-kit -D
-# or
-yarn add subscribe-kit -D
-# or
-pnpm add subscribe-kit -D
-```
+- core
+- react
+- shared
 
 ## License
 
