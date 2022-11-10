@@ -1,6 +1,19 @@
 {
   "name": "@subscribe-kit/react",
   "version": "0.0.0",
+  "description": "a subscribe toolkit",
+  "keywords": [
+    "subscribe",
+    "event",
+    "listen",
+    "toolkit"
+  ],
+  "homepage": "https://github.com/Col0ring/subscribe-kit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Col0ring/subscribe-kit.git"
+  },
+  "author": "Col0ring <1561999073@qq.com>",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "typings": "dist/index.d.ts",

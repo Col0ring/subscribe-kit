@@ -28,6 +28,7 @@
     "@babel/core": "^7.20.2",
     "@babel/plugin-transform-runtime": "^7.19.6",
     "@babel/preset-env": "^7.20.2",
+    "@changesets/cli": "^2.25.2",
     "@col0ring/eslint-config": "^0.0.13",
     "@col0ring/prettier-config": "^0.0.2",
     "@col0ring/stylelint-config": "^0.0.8",

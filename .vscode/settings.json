@@ -2,10 +2,7 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "files.associations": {
     "*.svg": "html",
-    "*rc": "jsonc",
-    "*.json": "jsonc",
-    ".yarnrc": "shell",
-    ".npmrc": "shell"
+    "*.json": "jsonc"
   },
   "editor.codeActionsOnSave": {
     "source.fixAll": true
