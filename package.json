@@ -22,8 +22,8 @@
     "lint": "pnpm run lint:eslint && pnpm run format",
     "lint:eslint": "cross-env NODE_ENV=production eslint . --fix",
     "prepare": "husky install",
-    "release::publish": "changeset publish",
     "release:changeset": "changeset",
+    "release:publish": "changeset publish",
     "release:version": "changeset version"
   },
   "devDependencies": {
