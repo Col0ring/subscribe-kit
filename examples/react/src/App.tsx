@@ -1,21 +1,26 @@
+import { Store } from '@subscribe-kit/core'
 import { createSubscribeContext } from '@subscribe-kit/react'
 import './App.css'
 import reactLogo from './assets/react.svg'
+const subscribeStore = new Store({
+  initialValues: {
+    count: 0,
+    inputs: [] as any[],
+  },
+})
 const { withSubscribeProvider, useSubscribeContext, useWatch } =
   createSubscribeContext({
-    initialValues: {
-      foo: {
-        a: {
-          b: 0,
-        },
-      },
-      count: 0,
-    },
+    store: subscribeStore,
   })
 
 function App() {
   const { store } = useSubscribeContext()
-  const count = useWatch(['foo', 'a', 'b'])
+  const count = useWatch('count')
+  const inputs = useWatch(['inputs'])
+  const input1 = useWatch(['inputs', 0])
+  const input2 = useWatch(['inputs', 1])
+  const input3 = useWatch(['inputs', 0, 0])
+  const input4 = useWatch(['inputs', 1, 4])
   return (
     <div className="App">
       <div>
@@ -27,14 +32,34 @@ function App() {
         </a>
       </div>
       <h1>Vite + React</h1>
+      <h2>{inputs}</h2>
+      <h2>{input1}</h2>
+      <h2>{input2}</h2>
+      <h2>{input3}</h2>
+      <h2>{input4}</h2>
       <div className="card">
         <button
           onClick={() =>
             store.setValues((draft) => {
-              draft.foo.a.b++
+              draft.inputs = ['input1', 'input2']
             })
           }
         >
+          change input
+        </button>
+        <button
+          onClick={() =>
+            store.setValues((draft) => {
+              draft.inputs = [
+                ['input1', 'input2'],
+                ['input3', 'input3'],
+              ]
+            })
+          }
+        >
+          change input2
+        </button>
+        <button onClick={() => store.setValue('count', count + 1)}>
           count is {count}
         </button>
         <p>

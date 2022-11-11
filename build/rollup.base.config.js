@@ -7,17 +7,19 @@ import { defineConfig } from 'rollup'
 import del from 'rollup-plugin-delete'
 import dts from 'rollup-plugin-dts'
 import eslint from 'rollup-plugin-eslint2'
-import { terser } from 'rollup-plugin-terser'
 
 const extensions = ['.ts', '.tsx', '.js', '.jsx', '.json']
 const plugins = [
+  eslint({
+    include: 'src/**',
+  }),
   json(),
   commonjs(),
   resolve({
     extensions,
   }),
-  eslint({
-    include: 'src/**',
+  typescript({
+    tsconfig: './tsconfig.build.json',
   }),
   babel({
     presets: [
@@ -37,13 +39,10 @@ const plugins = [
       ],
     ],
     extensions,
+    inputSourceMap: true,
     exclude: /node_modules/,
     babelHelpers: 'runtime',
   }),
-  typescript({
-    tsconfig: './tsconfig.build.json',
-  }),
-  terser(),
   // 删除目录
   del({
     targets: 'dist',
@@ -57,7 +56,6 @@ export function createBaseConfig(pkg) {
   ]
 
   return defineConfig([
-    // dts
     {
       input: 'src/index.ts',
       external,
@@ -66,16 +64,15 @@ export function createBaseConfig(pkg) {
         {
           file: pkg.module,
           format: 'esm',
-          sourcemap: true,
         },
         {
           file: pkg.main,
           format: 'cjs',
           exports: 'auto',
-          sourcemap: true,
         },
       ],
     },
+    // dts
     {
       input: 'src/index.ts',
       external,

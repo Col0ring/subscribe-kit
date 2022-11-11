@@ -29,31 +29,54 @@ export class Observer<T> {
 
   // called by Store
   private _receive(paths: PropertyKey[][], values: T, oldValues: T) {
-    const visitedQueue: AnyFunction[] = []
+    const notifyQueue = this._getNotifyQueue(paths, values, oldValues)
+    notifyQueue.forEach((fn) => fn())
+  }
+
+  // called by Store
+  private _getNotifyQueue(
+    paths: PropertyKey[][],
+    values: T,
+    oldValues: T,
+    _subscriber = this._subscriber
+  ) {
+    const notifyQueue: AnyFunction[] = []
     paths.forEach((path) => {
-      let value = values as Record<PropertyKey, any>
-      let oldValue = oldValues as Record<PropertyKey, any>
-      let subscriber = this._subscriber as Subscriber | undefined
+      let value = values as any
+      let oldValue = oldValues as any
+      let subscriber = _subscriber as Subscriber | undefined
       for (const p of path) {
         subscriber = subscriber?.children[p]
         if (!subscriber) {
           return
         }
-        value = value[p]
-        oldValue = oldValue[p]
+        value = value?.[p]
+        oldValue = oldValue?.[p]
         if (!subscriber.notified) {
-          if (value !== oldValue) {
-            subscriber.listeners.forEach((cb) => cb(value, oldValue))
-          }
-          subscriber.notified = true
           const prevSubscriber = subscriber
-          visitedQueue.push(() => {
+          subscriber.notified = true
+          notifyQueue.push(() => {
             prevSubscriber.notified = false
+            if (value !== oldValue) {
+              prevSubscriber.listeners.forEach((cb) => cb(value, oldValue))
+            }
           })
         }
       }
+      // if change the parent path
+      if (subscriber?.children) {
+        const childKeys = Object.keys(subscriber.children)
+        notifyQueue.push(
+          ...this._getNotifyQueue(
+            childKeys.map((p) => [p]),
+            value,
+            oldValue,
+            subscriber
+          )
+        )
+      }
     })
-    visitedQueue.forEach((f) => f())
+    return notifyQueue
   }
   subscribe(
     callback: SubscribeCallback<T>,

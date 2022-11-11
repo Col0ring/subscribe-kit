@@ -15,26 +15,24 @@ import React, {
 } from 'react'
 import { useMemoizedEqualValue } from './hooks/useMemoizedEqualValue'
 
-export interface SubscribeContextValue<T> {
-  store: Store<T>
-}
-
-export interface SubscribeProviderProps<T> extends StoreOptions<T> {
+export interface SubscribeProviderProps {
   children: React.ReactNode
 }
+export interface SubscribeContextOptions<T> {
+  store: Store<T>
+}
+export interface SubscribeContextValue<T> extends SubscribeContextOptions<T> {}
 
-export function createSubscribeContext<T = any>(options?: StoreOptions<T>) {
-  const { initialValues: defaultInitialValues } = options || {}
+export function createSubscribeContext<T = any>(
+  options: SubscribeContextOptions<T>
+) {
   const SubscribeContext = createContext<SubscribeContextValue<T> | null>(null)
-  const SubscribeProvider: React.FC<SubscribeProviderProps<T>> = ({
+  const SubscribeProvider: React.FC<SubscribeProviderProps> = ({
     children,
-    initialValues = defaultInitialValues,
   }) => {
     const ctx: SubscribeContextValue<T> = useMemo(() => {
       return {
-        store: new Store({
-          initialValues,
-        }),
+        store: options.store,
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])

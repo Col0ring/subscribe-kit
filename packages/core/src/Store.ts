@@ -29,7 +29,7 @@ export class Store<T = any> {
     this._values = this._initialValues
   }
 
-  private _notify(values: T, oldValues: T, paths: PropertyKey[][]) {
+  private _notify(paths: PropertyKey[][], values: T, oldValues: T) {
     const observer = this._observer as unknown as {
       _receive: Observer<T>['_receive']
     }
@@ -58,9 +58,9 @@ export class Store<T = any> {
       draftValue[lastPath] = value
     })
     this._notify(
+      changes.map(({ path }) => path),
       values,
-      this._values,
-      changes.map(({ path }) => path)
+      this._values
     )
     this._values = values
   }
@@ -75,18 +75,18 @@ export class Store<T = any> {
     if (isPromise<typeof result>(result)) {
       result.then(([values, changes]) => {
         this._notify(
+          changes.map(({ path }) => path),
           values,
-          this._values,
-          changes.map(({ path }) => path)
+          this._values
         )
         this._values = values
       })
     } else {
       const [values, changes] = result
       this._notify(
+        changes.map(({ path }) => path),
         values,
-        this._values,
-        changes.map(({ path }) => path)
+        this._values
       )
       this._values = values
     }
