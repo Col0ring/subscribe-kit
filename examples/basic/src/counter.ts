@@ -8,12 +8,14 @@ const store = new Store({
     },
   },
 })
+
 export function setupCounter(element: HTMLButtonElement) {
   store.observer.subscribe(
-    'counter',
+    ['counter', ['foo', 'bar']],
     (value, oldValue) => {
       console.log(value, oldValue)
-      element.innerHTML = `count is ${value}`
+      const [counter] = value
+      element.innerHTML = `count is ${counter}`
     },
     {
       immediate: true,
@@ -22,7 +24,9 @@ export function setupCounter(element: HTMLButtonElement) {
   const setCounter = () => {
     store.setValues((draft) => {
       draft.counter++
+      draft.foo.bar++
     })
+    store.setValue(['counter'], store.values.counter + 1)
   }
   element.addEventListener('click', () => setCounter())
 }

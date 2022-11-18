@@ -5,7 +5,7 @@ import reactLogo from './assets/react.svg'
 const subscribeStore = new Store({
   initialValues: {
     count: 0,
-    inputs: [] as any[],
+    inputs: [] as string[] | string[][],
   },
 })
 const { withSubscribeProvider, useSubscribeContext, useWatch } =
@@ -19,8 +19,12 @@ function App() {
   const inputs = useWatch(['inputs'])
   const input1 = useWatch(['inputs', 0])
   const input2 = useWatch(['inputs', 1])
-  const input3 = useWatch(['inputs', 0, 0])
-  const input4 = useWatch(['inputs', 1, 4])
+  // const input3 = useWatch(['inputs', 0, 0])
+  // const input4 = useWatch(['inputs', 1, 4])
+  const [input3, input4] = useWatch([
+    ['inputs', 0, 0],
+    ['inputs', 1, 4],
+  ])
   return (
     <div className="App">
       <div>

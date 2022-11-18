@@ -26,7 +26,8 @@
   "dependencies": {
     "@babel/runtime": "^7.19.6",
     "@subscribe-kit/shared": "workspace:*",
-    "immer": "^9.0.16"
+    "immer": "^9.0.16",
+    "types-kit": "^0.0.11"
   },
   "publishConfig": {
     "access": "public"

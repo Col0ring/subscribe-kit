@@ -101,10 +101,12 @@ importers:
       '@babel/runtime': ^7.19.6
       '@subscribe-kit/shared': workspace:*
       immer: ^9.0.16
+      types-kit: ^0.0.11
     dependencies:
       '@babel/runtime': 7.20.1
       '@subscribe-kit/shared': link:../shared
       immer: 9.0.16
+      types-kit: 0.0.11
 
   packages/react:
     specifiers:
@@ -128,8 +130,10 @@ importers:
   packages/shared:
     specifiers:
       '@babel/runtime': ^7.19.6
+      types-kit: ^0.0.11
     dependencies:
       '@babel/runtime': 7.20.1
+      types-kit: 0.0.11
 
 packages:
 
@@ -7887,6 +7891,12 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
     dev: true
+
+  /types-kit/0.0.11:
+    resolution: {integrity: sha512-KPa7KkHNo4VIECGSlJv3LlC1BsKtJUe3Ka1Cyk6IlerdKkFgwQjU4jI89wXIzyQZKvE+IUJhniDq+4MPxTHuaQ==}
+    peerDependencies:
+      typescript: '>=4.5.0'
+    dev: false
 
   /typescript/4.8.4:
     resolution: {integrity: sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==}

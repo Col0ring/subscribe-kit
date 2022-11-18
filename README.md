@@ -1,4 +1,4 @@
-# Subscribe-Kit(WIP)
+# Subscribe-Kit
 
 a subscribe toolkit.
 

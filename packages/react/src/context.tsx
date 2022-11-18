@@ -1,11 +1,13 @@
 import {
+  getValueByPath,
   Store,
   StoreOptions,
   SubscribeCallback,
   SubscribeKeys,
   SubscribeValue,
+  SubscribeValues,
 } from '@subscribe-kit/core'
-import { ensureArray } from '@subscribe-kit/shared'
+import { ensureArray, Tuple } from '@subscribe-kit/shared'
 import React, {
   createContext,
   useContext,
@@ -66,32 +68,33 @@ export function createSubscribeContext<T = any>(
 
   function useWatch(): T
   function useWatch<K extends SubscribeKeys<T>>(key: K): SubscribeValue<T, K>
-  function useWatch<K extends SubscribeKeys<T>>(key?: K) {
+  function useWatch<K extends Tuple<SubscribeKeys<T>>>(
+    keys: K
+  ): SubscribeValues<T, K>
+  function useWatch<K extends SubscribeKeys<T> | Tuple<SubscribeKeys<T>>>(
+    keyOrKeys?: K
+  ) {
     const { store } = useSubscribeContext()
-    const memoizedKey = useMemoizedEqualValue(key)
-    const [value, setValue] = useState<T | SubscribeValue<T, K> | undefined>(
-      () => {
-        if (memoizedKey) {
-          const path = ensureArray(key) as PropertyKey[]
-          let initialValue = store.values as Record<PropertyKey, any>
-          for (const p of path) {
-            if (!initialValue) {
-              return
-            }
-            initialValue = initialValue[p]
-          }
-          return initialValue
+    const memoizedKey = useMemoizedEqualValue(keyOrKeys)
+    const [value, setValue] = useState<any>(() => {
+      if (memoizedKey) {
+        const path = ensureArray(keyOrKeys) as PropertyKey[] | PropertyKey[][]
+        const isPaths = path.some((p) => Array.isArray(p))
+        if (isPaths) {
+          const paths = path.map((p) => ensureArray(p) as PropertyKey[])
+          return paths.map((_path) => getValueByPath(_path, store.values))
         }
-        return store.values
+        return getValueByPath(path as PropertyKey[], store.values)
       }
-    )
+      return store.values
+    })
 
     useEffect(() => {
-      const callback: SubscribeCallback<T | SubscribeValue<T, K>> = (v) => {
+      const callback: SubscribeCallback<any> = (v) => {
         setValue(v)
       }
       const unsubscribe = memoizedKey
-        ? store.observer.subscribe(memoizedKey, callback, {
+        ? store.observer.subscribe(memoizedKey as any, callback, {
             immediate: true,
           })
         : store.observer.subscribe(callback, {
@@ -99,7 +102,6 @@ export function createSubscribeContext<T = any>(
           })
       return unsubscribe
     }, [store, memoizedKey])
-
     return value
   }
 

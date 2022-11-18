@@ -1,4 +1,9 @@
-import { ensureArray, isObject, isPromise } from '@subscribe-kit/shared'
+import {
+  ensureArray,
+  isObject,
+  isPromise,
+  ReadonlyDeep,
+} from '@subscribe-kit/shared'
 import { enablePatches, produceWithPatches } from 'immer'
 import { Observer } from './Observer'
 import { SubscribeKeys, SubscribeValue } from './types/subscribe'
@@ -15,7 +20,7 @@ export class Store<T = any> {
   private _values: T
   private _observer = new Observer<T>(this)
 
-  get values() {
+  get values(): ReadonlyDeep<T> {
     return this._values
   }
 
@@ -50,6 +55,7 @@ export class Store<T = any> {
       restPath.forEach((p) => {
         draftPrevValue = draftValue
         draftValue = draftValue[p]
+        // if value is not an object, and has a path after
         if (!isObject(draftValue)) {
           draftPrevValue[p] = {}
           draftValue = draftPrevValue[p]

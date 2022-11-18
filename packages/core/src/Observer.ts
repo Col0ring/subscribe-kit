@@ -1,18 +1,15 @@
-import {
-  AnyFunction,
-  ensureArray,
-  isFunction,
-  isObject,
-  warning,
-} from '@subscribe-kit/shared'
+import { ensureArray, isFunction, Tuple } from '@subscribe-kit/shared'
 import { Store } from './Store'
 import type {
   SubscribeCallback,
   SubscribeKeys,
+  SubscribeListener,
   SubscribeOptions,
   Subscriber,
   SubscribeValue,
+  SubscribeValues,
 } from './types/subscribe'
+import { getValueAndSubscriberByPath, getValueByPath } from './utils'
 
 export class Observer<T> {
   private _subscriber: Subscriber = {
@@ -28,20 +25,65 @@ export class Observer<T> {
   }
 
   // called by Store
-  private _receive(paths: PropertyKey[][], values: T, oldValues: T) {
-    const notifyQueue = this._getNotifyQueue(paths, values, oldValues)
-    notifyQueue.forEach((fn) => fn())
+  private _receive(changedPaths: PropertyKey[][], values: T, oldValues: T) {
+    const changedSubscribers = this._getChangedSubscribers(
+      changedPaths,
+      values,
+      oldValues
+    )
+    // run callback
+    changedSubscribers.forEach(({ subscriber, value, oldValue }) => {
+      if (value !== oldValue) {
+        subscriber.listeners.forEach((listener) => {
+          if (!listener.notified) {
+            if (listener.paths) {
+              const { callbackValues, callbackOldValues } =
+                listener.paths.reduce(
+                  (prev, next) => {
+                    prev.callbackValues.push(
+                      getValueByPath(next, values as any)
+                    )
+                    prev.callbackOldValues.push(
+                      getValueByPath(next, oldValues as any)
+                    )
+                    return prev
+                  },
+                  {
+                    callbackValues: [] as any[],
+                    callbackOldValues: [] as any[],
+                  }
+                )
+
+              listener.callback(callbackValues, callbackOldValues)
+            } else {
+              listener.callback(value, oldValue)
+            }
+            listener.notified = true
+          }
+        })
+      }
+    })
+    // reset
+    changedSubscribers.forEach(({ subscriber }) => {
+      subscriber.notified = false
+      subscriber.listeners.forEach((listener) => {
+        listener.notified = false
+      })
+    })
   }
 
-  // called by Store
-  private _getNotifyQueue(
-    paths: PropertyKey[][],
+  private _getChangedSubscribers(
+    changedPaths: PropertyKey[][],
     values: T,
     oldValues: T,
     _subscriber = this._subscriber
   ) {
-    const notifyQueue: AnyFunction[] = []
-    paths.forEach((path) => {
+    const changedSubscribers: Array<{
+      subscriber: Subscriber
+      value: any
+      oldValue: any
+    }> = []
+    changedPaths.forEach((path) => {
       let value = values as any
       let oldValue = oldValues as any
       let subscriber = _subscriber as Subscriber | undefined
@@ -53,21 +95,19 @@ export class Observer<T> {
         value = value?.[p]
         oldValue = oldValue?.[p]
         if (!subscriber.notified) {
-          const prevSubscriber = subscriber
           subscriber.notified = true
-          notifyQueue.push(() => {
-            prevSubscriber.notified = false
-            if (value !== oldValue) {
-              prevSubscriber.listeners.forEach((cb) => cb(value, oldValue))
-            }
+          changedSubscribers.push({
+            subscriber,
+            value,
+            oldValue,
           })
         }
       }
       // if change the parent path
       if (subscriber?.children) {
         const childKeys = Object.keys(subscriber.children)
-        notifyQueue.push(
-          ...this._getNotifyQueue(
+        changedSubscribers.push(
+          ...this._getChangedSubscribers(
             childKeys.map((p) => [p]),
             value,
             oldValue,
@@ -76,8 +116,90 @@ export class Observer<T> {
         )
       }
     })
-    return notifyQueue
+    return changedSubscribers
   }
+
+  private _subscribeValues<K extends Tuple<SubscribeKeys<T>>>(
+    keys: K,
+    callback: SubscribeCallback<SubscribeValues<T, K>>,
+    options?: SubscribeOptions
+  ) {
+    const paths = keys.map((key) => ensureArray(key) as PropertyKey[])
+    const listener: SubscribeListener<SubscribeValues<T, K>> = {
+      callback,
+      notified: false,
+      paths,
+    }
+    const { immediate } = options || {}
+    const values: (Record<PropertyKey, any> | undefined)[] = []
+
+    const unsubscribeListeners = paths.map((path) => {
+      const { subscriber, value } = getValueAndSubscriberByPath(
+        path,
+        this._store.values as Record<PropertyKey, any>,
+        this._subscriber
+      )
+      values.push(value)
+      subscriber.listeners.add(listener)
+
+      return () => {
+        subscriber.listeners.delete(listener)
+      }
+    })
+    if (immediate) {
+      callback(values as SubscribeValues<T, K>, values as SubscribeValues<T, K>)
+    }
+    return () => {
+      unsubscribeListeners.forEach((unsubscribe) => unsubscribe())
+    }
+  }
+
+  private _subscribeValue<K extends SubscribeKeys<T>>(
+    key: K,
+    callback: SubscribeCallback<SubscribeValue<T, K>>,
+    options?: SubscribeOptions
+  ) {
+    const { immediate } = options || {}
+    const listener: SubscribeListener<SubscribeValue<T, K>> = {
+      callback,
+      notified: false,
+    }
+    const path = ensureArray(key) as PropertyKey[]
+    const { subscriber, value } = getValueAndSubscriberByPath(
+      path,
+      this._store.values as Record<PropertyKey, any>,
+      this._subscriber
+    )
+
+    subscriber.listeners.add(listener)
+
+    if (immediate) {
+      callback(value as SubscribeValue<T, K>, value as SubscribeValue<T, K>)
+    }
+
+    return () => {
+      subscriber.listeners.delete(listener)
+    }
+  }
+
+  private _subscribeRoot(
+    callback: SubscribeCallback<T>,
+    options?: SubscribeOptions
+  ) {
+    const { immediate } = options || {}
+    const listener: SubscribeListener<T> = {
+      callback,
+      notified: false,
+    }
+    this._subscriber.listeners.add(listener)
+    if (immediate) {
+      callback(this._store.values as T, this._store.values as T)
+    }
+    return () => {
+      this._subscriber.listeners.delete(listener)
+    }
+  }
+
   subscribe(
     callback: SubscribeCallback<T>,
     options?: SubscribeOptions
@@ -87,64 +209,38 @@ export class Observer<T> {
     callback: SubscribeCallback<SubscribeValue<T, K>>,
     options?: SubscribeOptions
   ): () => void
-  subscribe<K extends SubscribeKeys<T>>(
-    keyOrCallback: K | SubscribeCallback<T>,
-    callbackOrOptions?:
-      | SubscribeCallback<SubscribeValue<T, K>>
-      | SubscribeOptions,
+  subscribe<K extends Tuple<SubscribeKeys<T>>>(
+    keys: K,
+    callback: SubscribeCallback<SubscribeValues<T, K>>,
+    options?: SubscribeOptions
+  ): () => void
+  subscribe<K extends SubscribeKeys<T> | Tuple<SubscribeKeys<T>>>(
+    keyOrKeysOrCallback: K | SubscribeCallback<T>,
+    callbackOrOptions?: SubscribeCallback<any> | SubscribeOptions,
     options?: SubscribeOptions
   ) {
-    let subscriber = this._subscriber
-    let value = this._store.values as Record<PropertyKey, any> | undefined
-    if (isFunction(keyOrCallback)) {
-      const callback = keyOrCallback
-      const { immediate } = (callbackOrOptions as SubscribeOptions) || {}
-      subscriber.listeners.add(callback)
-      if (immediate) {
-        callback(value, value)
-      }
-      return () => {
-        subscriber.listeners.delete(callback)
-      }
-    } else {
-      const { immediate } = options || {}
-      const key = keyOrCallback
-      const callback = callbackOrOptions as SubscribeCallback<
-        SubscribeValue<T, K>
-      >
-
-      const path = ensureArray(key) as PropertyKey[]
-      let invalidValue = false
-      path.forEach((p) => {
-        subscriber.children = subscriber.children || {}
-        subscriber.children[p] =
-          subscriber.children[p] ||
-          ({
-            listeners: new Set(),
-            children: {},
-            notified: false,
-          } as Subscriber)
-        subscriber = subscriber.children[p]
-        if (isObject(value)) {
-          value = value[p]
-        } else {
-          value = undefined
-          invalidValue = true
-        }
-      })
-      subscriber.listeners.add(callback)
-
-      warning(
-        !invalidValue,
-        `The property path value: [${path.toString()}] is invalid`
+    if (isFunction(keyOrKeysOrCallback)) {
+      return this._subscribeRoot(
+        keyOrKeysOrCallback,
+        callbackOrOptions as SubscribeOptions
       )
-
-      if (immediate) {
-        callback(value as SubscribeValue<T, K>, value as SubscribeValue<T, K>)
-      }
-
-      return () => {
-        subscriber.listeners.delete(callback)
+    } else {
+      const path = ensureArray(keyOrKeysOrCallback) as
+        | PropertyKey[]
+        | PropertyKey[][]
+      const isPaths = path.some((p) => Array.isArray(p))
+      if (isPaths) {
+        this._subscribeValues(
+          path as Tuple<SubscribeKeys<T>>,
+          callbackOrOptions as SubscribeCallback<any>,
+          options
+        )
+      } else {
+        this._subscribeValue(
+          path as SubscribeKeys<T>,
+          callbackOrOptions as SubscribeCallback<any>,
+          options
+        )
       }
     }
   }
