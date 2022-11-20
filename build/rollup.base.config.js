@@ -18,9 +18,6 @@ const plugins = [
   resolve({
     extensions,
   }),
-  typescript({
-    tsconfig: './tsconfig.build.json',
-  }),
   babel({
     presets: [
       [
@@ -39,9 +36,11 @@ const plugins = [
       ],
     ],
     extensions,
-    inputSourceMap: true,
     exclude: /node_modules/,
     babelHelpers: 'runtime',
+  }),
+  typescript({
+    tsconfig: './tsconfig.build.json',
   }),
   // 删除目录
   del({

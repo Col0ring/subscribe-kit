@@ -1,6 +1,7 @@
 import { ensureArray, isFunction, Tuple } from '@subscribe-kit/shared'
 import { Store } from './Store'
 import type {
+  ChangedSubscriber,
   SubscribeCallback,
   SubscribeKeys,
   SubscribeListener,
@@ -31,6 +32,14 @@ export class Observer<T> {
       values,
       oldValues
     )
+    this._runSubscribers(changedSubscribers, values, oldValues)
+  }
+
+  private _runSubscribers(
+    changedSubscribers: ChangedSubscriber[],
+    values: T,
+    oldValues: T
+  ) {
     // run callback
     changedSubscribers.forEach(({ subscriber, value, oldValue }) => {
       if (value !== oldValue) {
@@ -77,7 +86,7 @@ export class Observer<T> {
     values: T,
     oldValues: T,
     _subscriber = this._subscriber
-  ) {
+  ): ChangedSubscriber[] {
     const changedSubscribers: Array<{
       subscriber: Subscriber
       value: any
@@ -224,24 +233,23 @@ export class Observer<T> {
         keyOrKeysOrCallback,
         callbackOrOptions as SubscribeOptions
       )
-    } else {
-      const path = ensureArray(keyOrKeysOrCallback) as
-        | PropertyKey[]
-        | PropertyKey[][]
-      const isPaths = path.some((p) => Array.isArray(p))
-      if (isPaths) {
-        this._subscribeValues(
-          path as Tuple<SubscribeKeys<T>>,
-          callbackOrOptions as SubscribeCallback<any>,
-          options
-        )
-      } else {
-        this._subscribeValue(
-          path as SubscribeKeys<T>,
-          callbackOrOptions as SubscribeCallback<any>,
-          options
-        )
-      }
     }
+    const path = ensureArray(keyOrKeysOrCallback) as
+      | PropertyKey[]
+      | PropertyKey[][]
+    const isPaths = path.some((p) => Array.isArray(p))
+    if (isPaths) {
+      return this._subscribeValues(
+        path as Tuple<SubscribeKeys<T>>,
+        callbackOrOptions as SubscribeCallback<any>,
+        options
+      )
+    }
+    // path
+    return this._subscribeValue(
+      path as SubscribeKeys<T>,
+      callbackOrOptions as SubscribeCallback<any>,
+      options
+    )
   }
 }

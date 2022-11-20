@@ -52,8 +52,14 @@ export interface SubscribeListener<V> {
   paths?: PropertyKey[][]
 }
 
-export type Subscriber = {
+export interface Subscriber {
   listeners: Set<SubscribeListener<any>>
   children: Record<PropertyKey, Subscriber>
   notified: boolean
+}
+
+export interface ChangedSubscriber {
+  subscriber: Subscriber
+  value: any
+  oldValue: any
 }
