@@ -1,4 +1,4 @@
 {
-  "*.{ts,tsx,js,jsx}": ["npm run lint:eslint", "npm run format"],
-  "*.{md,yaml,yml,json,html}": ["npm run format"]
+  "*.{ts,tsx,js,jsx}": ["pnpm run lint:eslint", "pnpm run format"],
+  "*.{md,yaml,yml,json,html}": ["pnpm run format"]
 }
