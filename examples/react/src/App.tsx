@@ -7,6 +7,14 @@ const store = new Store({
     count: 0,
   },
 })
+
+store.observer.subscribe((value, oldValue, { changedPaths }) => {
+  console.log(value, oldValue, changedPaths)
+})
+
+store.observer.subscribe('count', (value, oldValue, { changedPaths }) => {
+  console.log(value, oldValue, changedPaths)
+})
 const { useWatch } = createWatch({
   store,
 })

@@ -2,6 +2,7 @@ import { ensureArray, isFunction, Tuple } from '@subscribe-kit/shared'
 import { Store } from './Store'
 import type {
   ChangedSubscriber,
+  ListenerHandler,
   SubscribeCallback,
   SubscribeKeys,
   SubscribeListener,
@@ -40,38 +41,69 @@ export class Observer<T> {
     values: T,
     oldValues: T
   ) {
-    // run callback
-    changedSubscribers.forEach(({ subscriber, value, oldValue }) => {
-      if (value !== oldValue) {
-        subscriber.listeners.forEach((listener) => {
-          if (!listener.notified) {
-            if (listener.paths) {
-              const { callbackValues, callbackOldValues } =
-                listener.paths.reduce(
-                  (prev, next) => {
-                    prev.callbackValues.push(
-                      getValueByPath(next, values as any)
-                    )
-                    prev.callbackOldValues.push(
-                      getValueByPath(next, oldValues as any)
-                    )
-                    return prev
-                  },
-                  {
-                    callbackValues: [] as any[],
-                    callbackOldValues: [] as any[],
-                  }
-                )
+    const listenerHandlers: ListenerHandler[] = []
+    const handlerCache = new Map<SubscribeListener, ListenerHandler>()
 
-              listener.callback(callbackValues, callbackOldValues)
+    changedSubscribers.forEach(
+      ({ subscriber, value, oldValue, changedPaths }) => {
+        if (value !== oldValue) {
+          subscriber.listeners.forEach((listener) => {
+            // listener may be in other subscribers
+            if (!listener.notified) {
+              if (listener.paths) {
+                const { callbackValues, callbackOldValues } =
+                  listener.paths.reduce(
+                    (prev, next) => {
+                      prev.callbackValues.push(
+                        getValueByPath(next, values as any)
+                      )
+                      prev.callbackOldValues.push(
+                        getValueByPath(next, oldValues as any)
+                      )
+                      return prev
+                    },
+                    {
+                      callbackValues: [] as any[],
+                      callbackOldValues: [] as any[],
+                    }
+                  )
+
+                const listenerHandler: ListenerHandler = {
+                  value: callbackValues,
+                  oldValue: callbackOldValues,
+                  changedPaths,
+                  multiple: true,
+                  listener,
+                }
+                listenerHandlers.push(listenerHandler)
+                handlerCache.set(listener, listenerHandler)
+              } else {
+                const listenerHandler: ListenerHandler = {
+                  value,
+                  oldValue,
+                  changedPaths,
+                  multiple: false,
+                  listener,
+                }
+                listenerHandlers.push(listenerHandler)
+                handlerCache.set(listener, listenerHandler)
+              }
+              listener.notified = true
             } else {
-              listener.callback(value, oldValue)
+              const listenerHandler = handlerCache.get(listener)
+              if (listenerHandler && listenerHandler.multiple) {
+                listenerHandler.changedPaths.push(...changedPaths)
+              }
             }
-            listener.notified = true
-          }
-        })
+          })
+        }
       }
+    )
+    // run callback
+    listenerHandlers.forEach(({ value, oldValue, changedPaths, listener }) => {
+      listener.callback(value, oldValue, { changedPaths })
     })
+
     // reset
     changedSubscribers.forEach(({ subscriber }) => {
       subscriber.notified = false
@@ -87,11 +119,15 @@ export class Observer<T> {
     oldValues: T,
     _subscriber = this._subscriber
   ): ChangedSubscriber[] {
-    const changedSubscribers: Array<{
-      subscriber: Subscriber
-      value: any
-      oldValue: any
-    }> = []
+    const changedSubscribers: ChangedSubscriber[] = []
+    const subscriberCache = new Map<Subscriber, ChangedSubscriber>()
+    // root subscriber
+    changedSubscribers.push({
+      subscriber: _subscriber,
+      value: values as any,
+      oldValue: oldValues as any,
+      changedPaths,
+    })
     changedPaths.forEach((path) => {
       let value = values as any
       let oldValue = oldValues as any
@@ -105,11 +141,19 @@ export class Observer<T> {
         oldValue = oldValue?.[p]
         if (!subscriber.notified) {
           subscriber.notified = true
-          changedSubscribers.push({
+          const changedSubscriber: ChangedSubscriber = {
             subscriber,
             value,
             oldValue,
-          })
+            changedPaths: [path],
+          }
+          changedSubscribers.push(changedSubscriber)
+          subscriberCache.set(subscriber, changedSubscriber)
+        } else {
+          const changedSubscriber = subscriberCache.get(subscriber)
+          if (changedSubscriber) {
+            changedSubscriber.changedPaths.push(path)
+          }
         }
       }
       // if change the parent path
@@ -156,7 +200,11 @@ export class Observer<T> {
       }
     })
     if (immediate) {
-      callback(values as SubscribeValues<T, K>, values as SubscribeValues<T, K>)
+      callback(
+        values as SubscribeValues<T, K>,
+        values as SubscribeValues<T, K>,
+        { changedPaths: paths }
+      )
     }
     return () => {
       unsubscribeListeners.forEach((unsubscribe) => unsubscribe())
@@ -183,7 +231,9 @@ export class Observer<T> {
     subscriber.listeners.add(listener)
 
     if (immediate) {
-      callback(value as SubscribeValue<T, K>, value as SubscribeValue<T, K>)
+      callback(value as SubscribeValue<T, K>, value as SubscribeValue<T, K>, {
+        changedPaths: [path],
+      })
     }
 
     return () => {
@@ -202,7 +252,9 @@ export class Observer<T> {
     }
     this._subscriber.listeners.add(listener)
     if (immediate) {
-      callback(this._store.values as T, this._store.values as T)
+      callback(this._store.values as T, this._store.values as T, {
+        changedPaths: [],
+      })
     }
     return () => {
       this._subscriber.listeners.delete(listener)
