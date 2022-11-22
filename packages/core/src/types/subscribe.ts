@@ -57,21 +57,30 @@ export interface SubscribeOptions {
 //     : never
 //   : never
 
-export interface SubscribeCallbackOptions {
-  changedPaths: PropertyKey[][]
+export type ChangedPathsArray = PropertyKey[][][]
+
+export type ChangedPaths = PropertyKey[][]
+
+export interface SubscribeCallbackOptions<
+  C extends ChangedPaths | ChangedPathsArray
+> {
+  changedPaths: C
 }
 
-export type SubscribeCallback<V> = (
-  newValue: V,
-  oldValue: V,
-  options: SubscribeCallbackOptions
-) => void
+export type SubscribeCallback<
+  V,
+  C extends ChangedPaths | ChangedPathsArray = ChangedPaths | ChangedPathsArray
+> = (newValue: V, oldValue: V, options: SubscribeCallbackOptions<C>) => void
 
-export interface SubscribeListener<V = any> {
-  callback: SubscribeCallback<V>
+export interface SubscribeListenerHandler<V = any> {
+  callback: SubscribeCallback<V, any[]>
   notified: boolean
   // property array
   paths?: PropertyKey[][]
+}
+export interface SubscribeListener<V = any> {
+  handler: SubscribeListenerHandler<V>
+  pathIndex?: number
 }
 
 export interface Subscriber {
@@ -84,13 +93,12 @@ export interface ChangedSubscriber {
   subscriber: Subscriber
   value: any
   oldValue: any
-  changedPaths: PropertyKey[][]
+  changedPaths: ChangedPaths
 }
 
 export interface ListenerHandler {
-  listener: SubscribeListener
+  handler: SubscribeListenerHandler
   value: any
   oldValue: any
-  multiple: boolean
-  changedPaths: PropertyKey[][]
+  changedPaths: ChangedPaths | ChangedPathsArray
 }

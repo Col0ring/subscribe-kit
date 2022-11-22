@@ -8,13 +8,6 @@ const store = new Store({
   },
 })
 
-store.observer.subscribe((value, oldValue, { changedPaths }) => {
-  console.log(value, oldValue, changedPaths)
-})
-
-store.observer.subscribe('count', (value, oldValue, { changedPaths }) => {
-  console.log(value, oldValue, changedPaths)
-})
 const { useWatch } = createWatch({
   store,
 })
@@ -33,7 +26,11 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => store.setValue('count', count + 1)}>
+        <button
+          onClick={() => {
+            store.setValue('count', count + 1)
+          }}
+        >
           count is {count}
         </button>
         <p>

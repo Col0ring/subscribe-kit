@@ -1,11 +1,14 @@
-import { ensureArray, isFunction, Tuple } from '@subscribe-kit/shared'
+import { ensureArray, isFunction, isNumber, Tuple } from '@subscribe-kit/shared'
 import { Store } from './Store'
 import type {
+  ChangedPaths,
+  ChangedPathsArray,
   ChangedSubscriber,
   ListenerHandler,
   SubscribeCallback,
   SubscribeKeys,
   SubscribeListener,
+  SubscribeListenerHandler,
   SubscribeOptions,
   Subscriber,
   SubscribeValue,
@@ -42,17 +45,18 @@ export class Observer<T> {
     oldValues: T
   ) {
     const listenerHandlers: ListenerHandler[] = []
-    const handlerCache = new Map<SubscribeListener, ListenerHandler>()
+    const handlerCache = new Map<SubscribeListenerHandler, ListenerHandler>()
 
     changedSubscribers.forEach(
       ({ subscriber, value, oldValue, changedPaths }) => {
         if (value !== oldValue) {
           subscriber.listeners.forEach((listener) => {
+            const { handler, pathIndex } = listener
             // listener may be in other subscribers
-            if (!listener.notified) {
-              if (listener.paths) {
+            if (!handler.notified) {
+              if (handler.paths && isNumber(pathIndex)) {
                 const { callbackValues, callbackOldValues } =
-                  listener.paths.reduce(
+                  handler.paths.reduce(
                     (prev, next) => {
                       prev.callbackValues.push(
                         getValueByPath(next, values as any)
@@ -67,32 +71,40 @@ export class Observer<T> {
                       callbackOldValues: [] as any[],
                     }
                   )
+                // changed paths of values
+                const changedPathsArray: ChangedPathsArray = new Array(
+                  handler.paths.length
+                )
+                  .fill(0)
+                  .map(() => [])
+                changedPathsArray[pathIndex] = changedPaths
 
                 const listenerHandler: ListenerHandler = {
                   value: callbackValues,
                   oldValue: callbackOldValues,
-                  changedPaths,
-                  multiple: true,
-                  listener,
+                  changedPaths: changedPathsArray,
+                  handler,
                 }
                 listenerHandlers.push(listenerHandler)
-                handlerCache.set(listener, listenerHandler)
+                handlerCache.set(handler, listenerHandler)
               } else {
                 const listenerHandler: ListenerHandler = {
                   value,
                   oldValue,
                   changedPaths,
-                  multiple: false,
-                  listener,
+                  handler,
                 }
                 listenerHandlers.push(listenerHandler)
-                handlerCache.set(listener, listenerHandler)
+                handlerCache.set(handler, listenerHandler)
               }
-              listener.notified = true
+              handler.notified = true
             } else {
-              const listenerHandler = handlerCache.get(listener)
-              if (listenerHandler && listenerHandler.multiple) {
-                listenerHandler.changedPaths.push(...changedPaths)
+              const listenerHandler = handlerCache.get(handler)
+              if (listenerHandler && isNumber(pathIndex)) {
+                // eslint-disable-next-line @typescript-eslint/no-extra-semi
+                ;(listenerHandler.changedPaths as ChangedPathsArray)[
+                  pathIndex
+                ] = changedPaths
               }
             }
           })
@@ -100,15 +112,15 @@ export class Observer<T> {
       }
     )
     // run callback
-    listenerHandlers.forEach(({ value, oldValue, changedPaths, listener }) => {
-      listener.callback(value, oldValue, { changedPaths })
+    listenerHandlers.forEach(({ value, oldValue, changedPaths, handler }) => {
+      handler.callback(value, oldValue, { changedPaths })
     })
 
     // reset
     changedSubscribers.forEach(({ subscriber }) => {
       subscriber.notified = false
-      subscriber.listeners.forEach((listener) => {
-        listener.notified = false
+      subscriber.listeners.forEach(({ handler }) => {
+        handler.notified = false
       })
     })
   }
@@ -159,39 +171,48 @@ export class Observer<T> {
       // if change the parent path
       if (subscriber?.children) {
         const childKeys = Object.keys(subscriber.children)
-        changedSubscribers.push(
-          ...this._getChangedSubscribers(
-            childKeys.map((p) => [p]),
-            value,
-            oldValue,
-            subscriber
+        if (childKeys.length > 0) {
+          changedSubscribers.push(
+            ...this._getChangedSubscribers(
+              childKeys.map((p) => [p]),
+              value,
+              oldValue,
+              subscriber
+            )
           )
-        )
+        }
       }
     })
+
     return changedSubscribers
   }
 
   private _subscribeValues<K extends Tuple<SubscribeKeys<T>>>(
     keys: K,
-    callback: SubscribeCallback<SubscribeValues<T, K>>,
+    callback: SubscribeCallback<SubscribeValues<T, K>, ChangedPathsArray>,
     options?: SubscribeOptions
   ) {
     const paths = keys.map((key) => ensureArray(key) as PropertyKey[])
-    const listener: SubscribeListener<SubscribeValues<T, K>> = {
+    const listenerHandler: SubscribeListenerHandler<SubscribeValues<T, K>> = {
       callback,
       notified: false,
       paths,
     }
+
     const { immediate } = options || {}
     const values: (Record<PropertyKey, any> | undefined)[] = []
 
-    const unsubscribeListeners = paths.map((path) => {
+    const unsubscribeListeners = paths.map((path, index) => {
       const { subscriber, value } = getValueAndSubscriberByPath(
         path,
         this._store.values as Record<PropertyKey, any>,
         this._subscriber
       )
+      const listener: SubscribeListener<SubscribeValues<T, K>> = {
+        handler: listenerHandler,
+        pathIndex: index,
+      }
+
       values.push(value)
       subscriber.listeners.add(listener)
 
@@ -203,7 +224,7 @@ export class Observer<T> {
       callback(
         values as SubscribeValues<T, K>,
         values as SubscribeValues<T, K>,
-        { changedPaths: paths }
+        { changedPaths: paths.map((path) => [path]) }
       )
     }
     return () => {
@@ -213,13 +234,16 @@ export class Observer<T> {
 
   private _subscribeValue<K extends SubscribeKeys<T>>(
     key: K,
-    callback: SubscribeCallback<SubscribeValue<T, K>>,
+    callback: SubscribeCallback<SubscribeValue<T, K>, ChangedPaths>,
     options?: SubscribeOptions
   ) {
     const { immediate } = options || {}
-    const listener: SubscribeListener<SubscribeValue<T, K>> = {
+    const listenerHandler: SubscribeListenerHandler<SubscribeValue<T, K>> = {
       callback,
       notified: false,
+    }
+    const listener: SubscribeListener<SubscribeValue<T, K>> = {
+      handler: listenerHandler,
     }
     const path = ensureArray(key) as PropertyKey[]
     const { subscriber, value } = getValueAndSubscriberByPath(
@@ -242,13 +266,16 @@ export class Observer<T> {
   }
 
   private _subscribeRoot(
-    callback: SubscribeCallback<T>,
+    callback: SubscribeCallback<T, ChangedPaths>,
     options?: SubscribeOptions
   ) {
     const { immediate } = options || {}
-    const listener: SubscribeListener<T> = {
+    const listenerHandler: SubscribeListenerHandler<T> = {
       callback,
       notified: false,
+    }
+    const listener: SubscribeListener<T> = {
+      handler: listenerHandler,
     }
     this._subscriber.listeners.add(listener)
     if (immediate) {
@@ -262,22 +289,22 @@ export class Observer<T> {
   }
 
   subscribe(
-    callback: SubscribeCallback<T>,
+    callback: SubscribeCallback<T, ChangedPaths>,
     options?: SubscribeOptions
   ): () => void
   subscribe<K extends SubscribeKeys<T>>(
     key: K,
-    callback: SubscribeCallback<SubscribeValue<T, K>>,
+    callback: SubscribeCallback<SubscribeValue<T, K>, ChangedPaths>,
     options?: SubscribeOptions
   ): () => void
   subscribe<K extends Tuple<SubscribeKeys<T>>>(
     keys: K,
-    callback: SubscribeCallback<SubscribeValues<T, K>>,
+    callback: SubscribeCallback<SubscribeValues<T, K>, ChangedPathsArray>,
     options?: SubscribeOptions
   ): () => void
   subscribe<K extends SubscribeKeys<T> | Tuple<SubscribeKeys<T>>>(
     keyOrKeysOrCallback: K | SubscribeCallback<T>,
-    callbackOrOptions?: SubscribeCallback<any> | SubscribeOptions,
+    callbackOrOptions?: SubscribeCallback<any, any[]> | SubscribeOptions,
     options?: SubscribeOptions
   ) {
     if (isFunction(keyOrKeysOrCallback)) {
@@ -289,6 +316,7 @@ export class Observer<T> {
     const path = ensureArray(keyOrKeysOrCallback) as
       | PropertyKey[]
       | PropertyKey[][]
+
     const isPaths = path.some((p) => Array.isArray(p))
     if (isPaths) {
       return this._subscribeValues(

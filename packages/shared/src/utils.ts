@@ -16,7 +16,9 @@ export function isObject<T = Record<PropertyKey, any>>(val: any): val is T {
 export function isFunction<T = AnyFunction>(val: any): val is T {
   return typeof val === 'function'
 }
-
+export function isNumber(val: any): val is number {
+  return typeof val === 'number' && !Number.isNaN(val)
+}
 export function warning(valid: boolean, message: string) {
   if (isDev && !valid) {
     console.warn(message)
