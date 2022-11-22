@@ -1,5 +1,14 @@
 # @subscribe-kit/react
 
+## 1.0.1
+
+### Patch Changes
+
+- 7e51e17: support changed paths
+- Updated dependencies [7e51e17]
+  - @subscribe-kit/core@1.0.1
+  - @subscribe-kit/shared@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
