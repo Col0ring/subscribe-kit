@@ -44,7 +44,7 @@ function setupCounter(element) {
 }
 ```
 
-### With React
+### React
 
 ```jsx
 import { Store } from '@subscribe-kit/core'
@@ -65,6 +65,71 @@ function Counter() {
       count is {count}
     </button>
   )
+}
+```
+
+## Types
+
+### @subscribe-kit/core
+
+#### Store
+
+```ts
+declare class Store<T = any> {
+  get values(): ReadonlyDeep<T>
+  get observer(): Observer<T>
+  constructor(options?: StoreOptions<T>)
+  resetValues(): void
+  setValue<K extends SubscribeKeys<T>>(
+    key: K,
+    value: SubscribeValue<T, K>
+  ): void
+  setValues(recipe: (draft: T) => T | void): void
+  setValues(recipe: (draft: T) => Promise<T | void>): void
+}
+```
+
+#### Observer
+
+```ts
+declare class Observer<T> {
+  constructor(store: Store<T>)
+  subscribe(
+    callback: SubscribeCallback<T>,
+    options?: SubscribeOptions
+  ): () => void
+  subscribe<K extends SubscribeKeys<T>>(
+    key: K,
+    callback: SubscribeCallback<SubscribeValue<T, K>>,
+    options?: SubscribeOptions
+  ): () => void
+  subscribe<K extends Tuple<SubscribeKeys<T>>>(
+    keys: K,
+    callback: SubscribeCallback<SubscribeValues<T, K>>,
+    options?: SubscribeOptions
+  ): () => void
+}
+```
+
+### @subscribe-kit/react
+
+#### createWatch
+
+```ts
+interface CreateWatchOptions<T> {
+  store: Store<T>
+}
+
+declare function createWatch<T = any>(
+  options: CreateWatchOptions<T>
+): {
+  readonly useWatch: {
+    (): T
+    <K extends SubscribeKeys<T>>(key: K): SubscribeValue<T, K>
+    <K_1 extends Tuple<SubscribeKeys<T>, SubscribeKeys<T>>>(
+      keys: K_1
+    ): SubscribeValues<T, K_1>
+  }
 }
 ```
 

@@ -31,7 +31,7 @@ export function createWatch<T = any>(options: CreateWatchOptions<T>) {
         const isPaths = path.some((p) => Array.isArray(p))
         if (isPaths) {
           const paths = path.map((p) => ensureArray(p) as PropertyKey[])
-          return paths.map((_path) => getValueByPath(_path, store.values))
+          return paths.map((p) => getValueByPath(p, store.values))
         }
         return getValueByPath(path as PropertyKey[], store.values)
       }
