@@ -13,7 +13,7 @@ export function setupCounter(element: HTMLButtonElement) {
   store.observer.subscribe(
     ['counter', ['foo', 'bar']],
     (value, oldValue) => {
-      console.log(value, oldValue)
+      console.log(store.values, value, oldValue)
       const [counter] = value
       element.innerHTML = `count is ${counter}`
     },

@@ -63,12 +63,13 @@ export class Store<T = any> {
       })
       draftValue[lastPath] = value
     })
+    const oldValues = this._values
+    this._values = values
     this._notify(
       changes.map(({ path }) => path),
       values,
-      this._values
+      oldValues
     )
-    this._values = values
   }
 
   setValues(recipe: (draft: T) => T | void): void
@@ -78,23 +79,25 @@ export class Store<T = any> {
       this._values,
       recipe as (draft: T) => T | void
     )
+    const oldValues = this._values
+
     if (isPromise<typeof result>(result)) {
       result.then(([values, changes]) => {
+        this._values = values
         this._notify(
           changes.map(({ path }) => path),
           values,
-          this._values
+          oldValues
         )
-        this._values = values
       })
     } else {
       const [values, changes] = result
+      this._values = values
       this._notify(
         changes.map(({ path }) => path),
         values,
-        this._values
+        oldValues
       )
-      this._values = values
     }
   }
 }
