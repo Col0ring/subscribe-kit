@@ -1,5 +1,13 @@
 # @subscribe-kit/core
 
+## 1.0.2
+
+### Patch Changes
+
+- 463e7b0: fix notify order
+- Updated dependencies [463e7b0]
+  - @subscribe-kit/shared@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes
