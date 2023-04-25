@@ -13,7 +13,7 @@ const { useWatch } = createWatch({
 })
 
 function App() {
-  const count = useWatch('count')
+  const [count] = useWatch([['count']])
   return (
     <div className="App">
       <div>
