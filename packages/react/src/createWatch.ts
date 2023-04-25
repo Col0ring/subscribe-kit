@@ -1,13 +1,12 @@
 import {
   getValueByPath,
   Store,
-  SubscribeCallback,
   SubscribeKeys,
   SubscribeValue,
   SubscribeValues,
 } from '@subscribe-kit/core'
 import { ensureArray, Tuple } from '@subscribe-kit/shared'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useMemoizedEqualValue } from './hooks/useMemoizedEqualValue'
 
 export interface CreateWatchOptions<T> {
@@ -25,34 +24,30 @@ export function createWatch<T = any>(options: CreateWatchOptions<T>) {
     keyOrKeys?: K
   ) {
     const memoizedKey = useMemoizedEqualValue(keyOrKeys)
-    const [value, setValue] = useState<any>(() => {
-      if (memoizedKey) {
-        const path = ensureArray(keyOrKeys) as PropertyKey[] | PropertyKey[][]
-        const isPaths = path.some((p) => Array.isArray(p))
-        if (isPaths) {
-          const paths = path.map((p) => ensureArray(p) as PropertyKey[])
-          return paths.map((p) => getValueByPath(p, store.values))
+    const value: any = useSyncExternalStore(
+      (listener) => {
+        const unsubscribe = memoizedKey
+          ? store.observer.subscribe(memoizedKey as any, listener, {
+              immediate: true,
+            })
+          : store.observer.subscribe(listener, {
+              immediate: true,
+            })
+        return unsubscribe
+      },
+      () => {
+        if (memoizedKey) {
+          const path = ensureArray(keyOrKeys) as PropertyKey[] | PropertyKey[][]
+          const isPaths = path.some((p) => Array.isArray(p))
+          if (isPaths) {
+            const paths = path.map((p) => ensureArray(p) as PropertyKey[])
+            return paths.map((p) => getValueByPath(p, store.values))
+          }
+          return getValueByPath(path as PropertyKey[], store.values)
         }
-        return getValueByPath(path as PropertyKey[], store.values)
+        return store.values
       }
-      return store.values
-    })
-
-    useEffect(() => {
-      const callback: SubscribeCallback<any> = (v) => {
-        setValue(v)
-      }
-      const unsubscribe = memoizedKey
-        ? store.observer.subscribe(memoizedKey as any, callback, {
-            immediate: true,
-          })
-        : store.observer.subscribe(callback, {
-            immediate: true,
-          })
-      return unsubscribe
-      // fix: useWatch 时 store 被改变的情况
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [memoizedKey, store])
+    )
     return value
   }
   return {
