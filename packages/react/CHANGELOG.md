@@ -1,5 +1,14 @@
 # @subscribe-kit/react
 
+## 1.0.3
+
+### Patch Changes
+
+- 633b125: fix: react useWatch deps
+- Updated dependencies [633b125]
+  - @subscribe-kit/core@1.0.3
+  - @subscribe-kit/shared@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes
