@@ -1,5 +1,11 @@
 # @subscribe-kit/shared
 
+## 2.0.1
+
+### Patch Changes
+
+- 4b9c9bd: fix getSnapshot value
+
 ## 2.0.0
 
 ### Major Changes

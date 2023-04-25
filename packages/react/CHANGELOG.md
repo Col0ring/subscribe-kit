@@ -1,5 +1,14 @@
 # @subscribe-kit/react
 
+## 2.0.1
+
+### Patch Changes
+
+- 4b9c9bd: fix getSnapshot value
+- Updated dependencies [4b9c9bd]
+  - @subscribe-kit/core@2.0.1
+  - @subscribe-kit/shared@2.0.1
+
 ## 2.0.0
 
 ### Major Changes
