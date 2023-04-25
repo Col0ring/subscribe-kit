@@ -50,10 +50,11 @@ export function createWatch<T = any>(options: CreateWatchOptions<T>) {
             immediate: true,
           })
       return unsubscribe
-    }, [memoizedKey])
+      // fix: useWatch 时 store 被改变的情况
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [memoizedKey, store])
     return value
   }
-
   return {
     useWatch,
   } as const
