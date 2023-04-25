@@ -1,5 +1,17 @@
 # @subscribe-kit/react
 
+## 2.0.0
+
+### Major Changes
+
+- 2181f8d: add useSyncExternalStore instead of useState
+
+### Patch Changes
+
+- Updated dependencies [2181f8d]
+  - @subscribe-kit/core@2.0.0
+  - @subscribe-kit/shared@2.0.0
+
 ## 1.0.3
 
 ### Patch Changes
