@@ -1,9 +1,4 @@
-import {
-  ensureArray,
-  isObject,
-  isPromise,
-  ReadonlyDeep,
-} from '@subscribe-kit/shared'
+import { ensureArray, isObject, isPromise } from '@subscribe-kit/shared'
 import { enablePatches, produceWithPatches } from 'immer'
 import { Observer } from './Observer'
 import { SubscribeKeys, SubscribeValue } from './types/subscribe'
@@ -15,12 +10,14 @@ export interface StoreOptions<T> {
   initialValues?: T
 }
 
-export class Store<T = any> {
+export class Store<
+  T extends Record<PropertyKey, any> = Record<PropertyKey, any>
+> {
   private _initialValues: T
   private _values: T
   private _observer = new Observer<T>(this)
 
-  get values(): ReadonlyDeep<T> {
+  get values(): T {
     return this._values
   }
 

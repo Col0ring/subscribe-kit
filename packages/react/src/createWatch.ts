@@ -6,14 +6,17 @@ import {
   SubscribeValues,
 } from '@subscribe-kit/core'
 import { ensureArray, Tuple } from '@subscribe-kit/shared'
-import { useCallback, useRef, useSyncExternalStore } from 'react'
+import { useCallback, useRef } from 'react'
+import { useSyncExternalStore } from 'use-sync-external-store'
 import { useMemoizedEqualValue } from './hooks/useMemoizedEqualValue'
 
-export interface CreateWatchOptions<T> {
+export interface CreateWatchOptions<T extends Record<PropertyKey, any>> {
   store: Store<T>
 }
 
-export function createWatch<T = any>(options: CreateWatchOptions<T>) {
+export function createWatch<T extends Record<PropertyKey, any>>(
+  options: CreateWatchOptions<T>
+) {
   const { store } = options
   function useWatch(): T
   function useWatch<K extends SubscribeKeys<T>>(key: K): SubscribeValue<T, K>
@@ -61,7 +64,7 @@ export function createWatch<T = any>(options: CreateWatchOptions<T>) {
       return store.values
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [memoizedKey, store])
-    const value: any = useSyncExternalStore(subscribe, getSnapshot)
+    const value: any = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
     return value
   }
   return {

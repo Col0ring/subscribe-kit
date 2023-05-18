@@ -26,12 +26,14 @@
   "dependencies": {
     "@babel/runtime": "^7.19.6",
     "@subscribe-kit/shared": "workspace:*",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "use-sync-external-store": "^1.2.0"
   },
   "devDependencies": {
     "@subscribe-kit/core": "workspace:*",
     "@types/lodash": "^4.14.188",
     "@types/react": "^18.0.21",
+    "@types/use-sync-external-store": "^0.0.3",
     "react": "^18.2.0"
   },
   "peerDependencies": {

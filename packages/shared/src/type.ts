@@ -1,4 +1,9 @@
-import type { ReadonlyDeep, Tuple } from 'types-kit'
+export type Tuple<T = unknown, R = T> =
+  | [T, ...R[]]
+  | [...R[], T]
+  | readonly [T, ...R[]]
+  | readonly [...R[], T]
+
 export type TupleKeys<T extends readonly unknown[]> = T extends readonly [
   any,
   ...infer Tail
@@ -26,5 +31,3 @@ export type EnsureArray<T> = T extends readonly unknown[] ? T : [T]
 export type AnyFunction<P extends readonly any[] = any[], R = any> = (
   ...args: P
 ) => R
-
-export type { Tuple, ReadonlyDeep }

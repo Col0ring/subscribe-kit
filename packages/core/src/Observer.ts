@@ -16,7 +16,7 @@ import type {
 } from './types/subscribe'
 import { getValueAndSubscriberByPath, getValueByPath } from './utils'
 
-export class Observer<T> {
+export class Observer<T extends Record<PropertyKey, any>> {
   private _subscriber: Subscriber = {
     children: {},
     listeners: new Set(),
