@@ -61,11 +61,11 @@ export function createBaseConfig(pkg) {
       plugins,
       output: [
         {
-          file: pkg.module,
+          file: pkg.publishConfig.module,
           format: 'esm',
         },
         {
-          file: pkg.main,
+          file: pkg.publishConfig.main,
           format: 'cjs',
           exports: 'auto',
         },
@@ -77,7 +77,7 @@ export function createBaseConfig(pkg) {
       external,
       output: [
         {
-          file: pkg.typings,
+          file: pkg.publishConfig.typings,
           format: 'es',
         },
       ],

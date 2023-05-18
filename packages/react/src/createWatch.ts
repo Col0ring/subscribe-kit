@@ -7,7 +7,7 @@ import {
 } from '@subscribe-kit/core'
 import { ensureArray, Tuple } from '@subscribe-kit/shared'
 import { useCallback, useRef } from 'react'
-import { useSyncExternalStore } from 'use-sync-external-store'
+import { useSyncExternalStore } from 'use-sync-external-store/shim'
 import { useMemoizedEqualValue } from './hooks/useMemoizedEqualValue'
 
 export interface CreateWatchOptions<T extends Record<PropertyKey, any>> {
