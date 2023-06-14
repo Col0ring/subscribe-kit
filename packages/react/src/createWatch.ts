@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react'
 import {
   getValueByPath,
   Store,
@@ -6,8 +7,8 @@ import {
   SubscribeValues,
 } from '@subscribe-kit/core'
 import { ensureArray, Tuple } from '@subscribe-kit/shared'
-import { useCallback, useRef } from 'react'
 import { useSyncExternalStore } from 'use-sync-external-store/shim'
+
 import { useMemoizedEqualValue } from './hooks/useMemoizedEqualValue'
 
 export interface CreateWatchOptions<T extends Record<PropertyKey, any>> {
@@ -31,17 +32,14 @@ export function createWatch<T extends Record<PropertyKey, any>>(
     const subscribe = useCallback(
       (listener: () => void) => {
         const unsubscribe = memoizedKey
-          ? store.observer.subscribe(memoizedKey as any, listener, {
-              immediate: true,
-            })
-          : store.observer.subscribe(listener, {
-              immediate: true,
-            })
+          ? store.observer.subscribe(memoizedKey as any, listener)
+          : store.observer.subscribe(listener)
         return unsubscribe
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [memoizedKey, store]
     )
+    // will be called when the page is re-rendered
     const getSnapshot = useCallback(() => {
       if (memoizedKey) {
         const path = ensureArray(memoizedKey) as PropertyKey[] | PropertyKey[][]
@@ -49,6 +47,7 @@ export function createWatch<T extends Record<PropertyKey, any>>(
         if (isPaths) {
           const paths = path.map((p) => ensureArray(p) as PropertyKey[])
           const newValue = paths.map((p) => getValueByPath(p, store.values))
+          // is equal
           if (
             newValue.length !== pathsValueRef.current.length ||
             newValue.some(

@@ -23,9 +23,9 @@
     "build": "rollup -c rollup.config.ts --configPlugin 'typescript={tsconfig: `./tsconfig.build.json`}'"
   },
   "dependencies": {
-    "@babel/runtime": "^7.19.6",
+    "@babel/runtime": "^7.22.5",
     "@subscribe-kit/shared": "workspace:*",
-    "immer": "^9.0.16",
+    "immer": "^10.0.2",
     "types-kit": "^0.0.11"
   },
   "publishConfig": {

@@ -20,7 +20,7 @@ export function getValueByPath(
 }
 
 /**
- * Get(init if subscriber not exist) value and subscriber
+ * Get value (init if subscriber not exist) and subscriber
  * @param path
  * @param values
  * @param _subscriber

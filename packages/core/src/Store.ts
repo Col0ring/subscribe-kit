@@ -1,10 +1,16 @@
 import { ensureArray, isObject, isPromise } from '@subscribe-kit/shared'
-import { enablePatches, produceWithPatches } from 'immer'
-import { Observer } from './Observer'
-import { SubscribeKeys, SubscribeValue } from './types/subscribe'
+import {
+  createDraft,
+  enablePatches,
+  finishDraft,
+  Patch,
+  produceWithPatches,
+} from 'immer'
 
-// immer patches
-enablePatches()
+import { SubscribeKeys, SubscribeValue } from './types/subscribe'
+import { Observer } from './Observer'
+
+let _immerPatched = false
 
 export interface StoreOptions<T> {
   initialValues?: T
@@ -29,6 +35,11 @@ export class Store<
     const { initialValues } = options || {}
     this._initialValues = initialValues || ({} as T)
     this._values = this._initialValues
+    if (!_immerPatched) {
+      // immer patches
+      enablePatches()
+      _immerPatched = true
+    }
   }
 
   private _notify(paths: PropertyKey[][], values: T, oldValues: T) {
@@ -72,14 +83,19 @@ export class Store<
   setValues(recipe: (draft: T) => T | void): void
   setValues(recipe: (draft: T) => Promise<T | void>): void
   setValues(recipe: (draft: T) => Promise<T | void> | T | void) {
-    const result = produceWithPatches(
-      this._values,
-      recipe as (draft: T) => T | void
-    )
     const oldValues = this._values
-
-    if (isPromise<typeof result>(result)) {
-      result.then(([values, changes]) => {
+    const draft = createDraft(this._values)
+    let changes: Patch[] = []
+    const draftStatus = recipe(draft)
+    if (isPromise<typeof draftStatus>(draftStatus)) {
+      draftStatus.then((promiseResult) => {
+        let values = finishDraft(draft, (patches) => {
+          changes.push(...patches)
+        }) as T
+        if (promiseResult !== undefined) {
+          values = promiseResult
+          changes = [{ path: [], op: 'replace', value: promiseResult }]
+        }
         this._values = values
         this._notify(
           changes.map(({ path }) => path),
@@ -88,7 +104,13 @@ export class Store<
         )
       })
     } else {
-      const [values, changes] = result
+      let values = finishDraft(draft, (patches) => {
+        changes.push(...patches)
+      }) as T
+      if (draftStatus !== undefined) {
+        values = draftStatus
+        changes = [{ path: [], op: 'replace', value: values }]
+      }
       this._values = values
       this._notify(
         changes.map(({ path }) => path),

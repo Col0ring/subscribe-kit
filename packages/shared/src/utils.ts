@@ -1,6 +1,9 @@
 import { isDev } from './constants'
 import { AnyFunction, EnsureArray } from './type'
 
+export function identity<T>(v: T): T {
+  return v
+}
 export function ensureArray<T>(value: T): EnsureArray<T> {
   return (Array.isArray(value) ? value : [value]) as EnsureArray<T>
 }

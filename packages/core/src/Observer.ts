@@ -1,5 +1,5 @@
 import { ensureArray, isFunction, isNumber, Tuple } from '@subscribe-kit/shared'
-import { Store } from './Store'
+
 import type {
   ChangedPaths,
   ChangedPathsArray,
@@ -14,6 +14,7 @@ import type {
   SubscribeValue,
   SubscribeValues,
 } from './types/subscribe'
+import { Store } from './Store'
 import { getValueAndSubscriberByPath, getValueByPath } from './utils'
 
 export class Observer<T extends Record<PropertyKey, any>> {
@@ -140,6 +141,7 @@ export class Observer<T extends Record<PropertyKey, any>> {
       oldValue: oldValues as any,
       changedPaths,
     })
+    // path === [] if root changed
     changedPaths.forEach((path) => {
       let value = values as any
       let oldValue = oldValues as any
