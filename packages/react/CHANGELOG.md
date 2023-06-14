@@ -1,5 +1,17 @@
 # @subscribe-kit/react
 
+## 2.1.0
+
+### Minor Changes
+
+- a40138c: add createSelector
+
+### Patch Changes
+
+- Updated dependencies [a40138c]
+  - @subscribe-kit/shared@2.1.0
+  - @subscribe-kit/core@2.1.0
+
 ## 2.0.1
 
 ### Patch Changes
