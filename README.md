@@ -46,6 +46,8 @@ function setupCounter(element) {
 
 ### React
 
+#### createWatch
+
 ```jsx
 import { Store } from '@subscribe-kit/core'
 import { createWatch } from '@subscribe-kit/react'
@@ -60,6 +62,30 @@ const { useWatch } = createWatch({
 
 function Counter() {
   const count = useWatch('count')
+  return (
+    <button onClick={() => store.setValue('count', count + 1)}>
+      count is {count}
+    </button>
+  )
+}
+```
+
+#### createSelector
+
+```jsx
+import { Store } from '@subscribe-kit/core'
+import { createSelector } from '@subscribe-kit/react'
+const store = new Store({
+  initialValues: {
+    count: 0,
+  },
+})
+const { useSelector } = createSelector({
+  store,
+})
+
+function Counter() {
+  const count = useSelector((state) => state.count)
   return (
     <button onClick={() => store.setValue('count', count + 1)}>
       count is {count}
@@ -129,6 +155,25 @@ declare function createWatch<T = any>(
     <K_1 extends Tuple<SubscribeKeys<T>, SubscribeKeys<T>>>(
       keys: K_1
     ): SubscribeValues<T, K_1>
+  }
+}
+```
+
+#### createSelector
+
+```ts
+interface CreateSelectorOptions<T extends Record<PropertyKey, any>> {
+  store: Store<T>
+}
+declare function createSelector<T extends Record<PropertyKey, any>>(
+  options: CreateSelectorOptions<T>
+): {
+  readonly useSelector: {
+    (): T
+    <R>(
+      selector: (values: T) => R,
+      isEqual?: ((a: R, b: R) => boolean) | undefined
+    ): R
   }
 }
 ```
