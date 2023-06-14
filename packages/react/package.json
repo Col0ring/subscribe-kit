@@ -1,6 +1,6 @@
 {
   "name": "@subscribe-kit/react",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "a subscribe toolkit",
   "keywords": [
     "subscribe",
@@ -36,7 +36,7 @@
     "react": "^18.2.0"
   },
   "peerDependencies": {
-    "@subscribe-kit/core": "2.x",
+    "@subscribe-kit/core": "2.1.0",
     "react": ">=17.0.0"
   },
   "publishConfig": {
