@@ -1,5 +1,11 @@
 # @subscribe-kit/shared
 
+## 2.1.0
+
+### Minor Changes
+
+- a40138c: add createSelector
+
 ## 2.0.1
 
 ### Patch Changes
