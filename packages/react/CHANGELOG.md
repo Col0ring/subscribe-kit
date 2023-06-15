@@ -1,5 +1,14 @@
 # @subscribe-kit/react
 
+## 2.1.1
+
+### Patch Changes
+
+- d71b74c: fix: add subscriber queue
+- Updated dependencies [d71b74c]
+  - @subscribe-kit/core@2.1.1
+  - @subscribe-kit/shared@2.1.1
+
 ## 2.1.0
 
 ### Minor Changes
