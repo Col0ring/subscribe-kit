@@ -1,4 +1,10 @@
-import { ensureArray, isFunction, isNumber, Tuple } from '@subscribe-kit/shared'
+import {
+  AnyFunction,
+  ensureArray,
+  isFunction,
+  isNumber,
+  Tuple,
+} from '@subscribe-kit/shared'
 
 import type {
   ChangedPaths,
@@ -23,21 +29,36 @@ export class Observer<T extends Record<PropertyKey, any>> {
     listeners: new Set(),
     notified: false,
   }
-
+  // make sure the prev subscriber ends before running the next one
+  private _task: AnyFunction | null = null
+  private _taskQueue: AnyFunction[] = []
   private _store: Store<T>
 
   constructor(store: Store<T>) {
     this._store = store
   }
 
+  private _taskReady() {
+    this._task = this._taskQueue.shift() || null
+    this._task?.()
+  }
+
   // called by Store
   private _receive(changedPaths: PropertyKey[][], values: T, oldValues: T) {
-    const changedSubscribers = this._getChangedSubscribers(
-      changedPaths,
-      values,
-      oldValues
-    )
-    this._runSubscribers(changedSubscribers, values, oldValues)
+    const task = () => {
+      const changedSubscribers = this._getChangedSubscribers(
+        changedPaths,
+        values,
+        oldValues
+      )
+      this._runSubscribers(changedSubscribers, values, oldValues)
+    }
+    if (this._task) {
+      this._taskQueue.push(task)
+    } else {
+      this._task = task
+      this._task()
+    }
   }
 
   private _runSubscribers(
@@ -124,6 +145,8 @@ export class Observer<T extends Record<PropertyKey, any>> {
         handler.notified = false
       })
     })
+
+    this._taskReady()
   }
 
   private _getChangedSubscribers(
