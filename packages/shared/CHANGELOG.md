@@ -1,5 +1,11 @@
 # @subscribe-kit/shared
 
+## 2.1.1
+
+### Patch Changes
+
+- d71b74c: fix: add subscriber queue
+
 ## 2.1.0
 
 ### Minor Changes
